@@ -1,5 +1,8 @@
 # Video Steganography
 A system that can hide or show secret messages through video media.
+<img src="https://i.imgur.com/NXFLqro.jpg">
+<img src="https://i.imgur.com/h2idJu8.jpg">
+<img src="https://i.imgur.com/OCtYu32.jpg">
 
 ## Installation
 Use the package manager [pip](https://pip.pypa.io/en/stable/) to install requirement libraries.
