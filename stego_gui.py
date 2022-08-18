@@ -1,11 +1,12 @@
 import cv2
-from moviepy.editor import *
 import os
 import unicodedata
 from tkinter import *
 from tkinter import filedialog
 from tkinter import messagebox
-import tkinter.font as font
+from moviepy.video.io.VideoFileClip import VideoFileClip
+from moviepy.audio.io.AudioFileClip import AudioFileClip
+from moviepy.audio.AudioClip import CompositeAudioClip
 
 def str_to_binary(msg):
     result= ''.join([ format(ord(i), "07b") for i in msg ])
