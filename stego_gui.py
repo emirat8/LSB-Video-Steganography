@@ -94,14 +94,14 @@ def hide(vid, n, data, key):
     frame_width = int(vidcap.get(3))
     frame_height = int(vidcap.get(4))
     size = (frame_width, frame_height)
-    frame = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+    frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     out = cv2.VideoWriter('stego_TEMP.avi', fourcc, fps=fps, frameSize=size)
     word_delimiter = "^*^"
     frame_delimiter = "^#^"
     data=unicodedata.normalize('NFKD', data).encode('ascii', 'ignore').decode('ascii')
     secret_message = data
-    data = data.split(" ")
+    data = data.split()
 
     stego_start = [str(n)]
     stego_start=encryption(stego_start, key)
@@ -175,8 +175,8 @@ def show(vid, key):
     print("Menampilkan pesan tersembunyi pada file : ", vid)
     print("Key : ", key)
     vidcap = cv2.VideoCapture(vid)
-    frame = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
-    print("Jumlah frame pada video yang dipilih : ",frame)
+    frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
+    print("Jumlah frame pada video yang dipilih : ",frames)
     
     frame_number = 0
     result = []
@@ -229,27 +229,57 @@ def hide_gui(filename):
             if msgbox == "ok":
                 window.destroy()
             
+        def only_numbers(inStr,acttyp):
+            if acttyp == '1':
+                if not inStr.isdigit():
+                    return False
+                elif int(inStr) > frames:
+                    return False
+            return True
+
+        def max_words(inStr,acttype):
+            if acttyp == '1':
+                if len(inStr.split()) > frames-int(spinbox.get()):
+                    return False
+            return True
+
+        def general_validate(filename, spinbox, input_pesan, input_key, frames):
+            if len (filename) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            elif len (spinbox) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            elif len (input_pesan) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            elif len (input_key) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            elif len(input_pesan.split()) > (frames-int(spinbox)+1):
+                msgbox = messagebox.showerror("Error",  "The maximum limit of words that can be hidden exceeds the limit.\n\nNumber of Words: "+str(len(input_pesan.split()))+"\nMaximum Limit Number of Words: "+str(frames-int(spinbox)+1))
+            else:
+                hiding_secret_message(hide(filename, int(spinbox), str(input_pesan), str(input_key)))
+        
+        
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
-        frame = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
         fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
-        label_video_frame = Label(window, text="Total frame: "+str(frame))
+        label_video_frames = Label(window, text="Total frame: "+str(frames))
         label_video_fps = Label(window, text="Frame per second: "+str(fps))
 
         scrollbar = Scrollbar(window)
-        spinbox = Spinbox(window, from_= 2, to=frame, wrap=True, width=6)
+        validation_only_numbers = window.register(only_numbers)
+        spinbox = Spinbox(window, from_= 2, to=frames, wrap=True, width=6, validate="key", validatecommand=(validation_only_numbers, '%P','%d'))
         input_pesan = Text(window, height = 5, width = 50, yscrollcommand=scrollbar.set)
         scrollbar.config(command=input_pesan.yview)
         input_key = Text(window, height = 1, width = 50)
-        button_hide = Button(window, text = "Hide", font=("Helvetica", 16), width=20, height=2, command =lambda: hiding_secret_message(hide(filename, int(spinbox.get()), str(input_pesan.get("1.0",'end-1c')), str(input_key.get("1.0",'end-1c')))))
+        button_hide = Button(window, text = "Hide", font=("Helvetica", 16), width=20, height=2, command =lambda: general_validate(filename, spinbox.get(), input_pesan.get("1.0",'end-1c'), input_key.get("1.0",'end-1c'), frames))
 
         label_title = Label(window, text = "Hide Secret Message", font=("Helvetica", 20)).grid(row=1, column=1, pady=16)
         label_file_explorer.grid(row=2, column=1)
         label_video_resolution.grid(row=3, column=1)
-        label_video_frame.grid(row=4, column=1)
+        label_video_frames.grid(row=4, column=1)
         label_video_fps.grid(row=5, column=1)
         label_title_spinbox = Label(window, text = "First Frame to Hide Message").grid(row=6, column=1, pady=(15,0), padx=15, sticky='w')
         spinbox.grid(row=7, column=1, padx=15, sticky='w')
@@ -261,16 +291,6 @@ def hide_gui(filename):
         button_hide.grid(row=12, column=1, padx=15, pady=(15,0))
 
         window.mainloop()
-    
-
-def browse_files():
-    filename = filedialog.askopenfilename(initialdir = "C:/Users/Komandan3/Skripsion",
-                                          title = "Select a Video",
-                                          filetypes = (("Video files",
-                                                        "*.avi*"),
-                                                       ("All files",
-                                                        "*.*")))
-    return filename
 
 def show_gui(filename):        
     window = Tk()
@@ -284,30 +304,47 @@ def show_gui(filename):
             msgbox = messagebox.showinfo("Secret Message",  "Secret message that have been successfully obtained:\n\n"+secret_message)
             if msgbox == "ok":
                 window.destroy()
+
+        def general_validate(filename, input_key, frames):
+            if len (filename) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            elif len (input_key) == 0:
+                msgbox = messagebox.showerror("Error",  "Please input all required data")
+            else:
+                showing_secret_message(show(filename, str(input_key)))
             
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
-        frame = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
+        frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
         fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
-        label_video_frame = Label(window, text="Total frame: "+str(frame))
+        label_video_frames = Label(window, text="Total frame: "+str(frames))
         label_video_fps = Label(window, text="Frame per second: "+str(fps))
 
         input_key = Text(window, height = 1, width = 50)
-        button_show = Button(window, text = "Show", font=("Helvetica", 16), width=20, height=2, command =lambda: showing_secret_message(show(filename, str(input_key.get("1.0",'end-1c')))))
+        button_show = Button(window, text = "Show", font=("Helvetica", 16), width=20, height=2, command =lambda: general_validate(filename, input_key.get("1.0",'end-1c'), frames))
 
         label_title = Label(window, text = "Show Secret Message", font=("Helvetica", 20)).grid(row=1, column=1, pady=16)
         label_file_explorer.grid(row=2, column=1, padx=15)
         label_video_resolution.grid(row=3, column=1)
-        label_video_frame.grid(row=4, column=1)
+        label_video_frames.grid(row=4, column=1)
         label_video_fps.grid(row=5, column=1)
         label_title_key = Label(window, text = "Key").grid(row=6, column=1, padx=15, pady=(10,0), sticky='w')
         input_key.grid(row=7, column=1, padx=15, sticky='w')
         button_show.grid(row=8, column=1, padx=15, pady=(15,0))
         
         window.mainloop()
+
+def browse_files():
+    filename = filedialog.askopenfilename(initialdir = "C:/Users/Komandan3/Skripsion",
+                                          title = "Select a Video",
+                                          filetypes = (("Video files",
+                                                        "*.avi*"),
+                                                       ("All files",
+                                                        "*.*")))
+    return filename
 
 def gui():
     window = Tk()
