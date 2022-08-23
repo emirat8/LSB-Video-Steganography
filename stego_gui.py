@@ -13,7 +13,7 @@ def str_to_binary(msg):
     return result
 
 def pixel_to_binary(msg):
-    result= [ format(i, "07b") for i in msg ]
+    result= [ format(i, "08b") for i in msg ]
     return result
 
 def vigenere(word, key, encrypt=True):
@@ -152,7 +152,7 @@ def lsb_show(frame):
     
     for i in frame:
         for pixel in i:
-            r, g, b = pixel_to_binary(pixel) 
+            r, g, b = pixel_to_binary(pixel)
             data_binary += r[-1]  
             data_binary += g[-1]  
             data_binary += b[-1]  
@@ -233,6 +233,8 @@ def hide_gui(filename):
             if acttyp == '1':
                 if not inStr.isdigit():
                     return False
+                elif inStr == '0':
+                    return False
                 elif int(inStr) > frames:
                     return False
             return True
@@ -245,13 +247,15 @@ def hide_gui(filename):
 
         def general_validate(filename, spinbox, input_pesan, input_key, frames):
             if len (filename) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
             elif len (spinbox) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
             elif len (input_pesan) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
             elif len (input_key) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
+            elif spinbox == '1':
+                msgbox = messagebox.showerror("Error",  "Cannot select frame 1 as the first frame to hide the message.\n\nPlease select another frame.")
             elif len(input_pesan.split()) > (frames-int(spinbox)+1):
                 msgbox = messagebox.showerror("Error",  "The maximum limit of words that can be hidden exceeds the limit.\n\nNumber of Words: "+str(len(input_pesan.split()))+"\nMaximum Limit Number of Words: "+str(frames-int(spinbox)+1))
             else:
@@ -307,9 +311,9 @@ def show_gui(filename):
 
         def general_validate(filename, input_key, frames):
             if len (filename) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
             elif len (input_key) == 0:
-                msgbox = messagebox.showerror("Error",  "Please input all required data")
+                msgbox = messagebox.showerror("Error",  "Please input all required data.")
             else:
                 showing_secret_message(show(filename, str(input_key)))
             
