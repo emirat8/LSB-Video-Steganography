@@ -71,8 +71,8 @@ def lsb_hide(frame, data):
     
     index_data = 0
 
-    for i in frame:
-        for pixel in i:
+    for row in frame:
+        for pixel in row:
             r, g, b = pixel_to_binary(pixel)
             if index_data < length_data:
                 pixel[0] = int(r[:-1] + binary_data[index_data], 2) 
@@ -89,12 +89,12 @@ def lsb_hide(frame, data):
     return frame
 
 def hide(vid, n, data, key):
+    print("Memulai proses menyembunyikan pesan rahasia...")
     vidcap = cv2.VideoCapture(vid)
     fourcc = cv2.VideoWriter_fourcc(*'FFV1')
     frame_width = int(vidcap.get(3))
     frame_height = int(vidcap.get(4))
     size = (frame_width, frame_height)
-    frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     out = cv2.VideoWriter('stego_TEMP.avi', fourcc, fps=fps, frameSize=size)
     word_delimiter = "^*^"
@@ -140,7 +140,7 @@ def hide(vid, n, data, key):
     out.release()
     cv2.destroyAllWindows()
 
-    print("\nTeks telah berhasil disembunyikan")
+    print("\nPesan telah berhasil disembunyikan")
     combine_video_audio(vid)
     return secret_message
 
@@ -150,12 +150,12 @@ def lsb_show(frame):
     data_binary = ""
     show.data = ""
     
-    for i in frame:
-        for pixel in i:
+    for row in frame:
+        for pixel in row:
             r, g, b = pixel_to_binary(pixel)
-            data_binary += r[-1]  
-            data_binary += g[-1]  
-            data_binary += b[-1]  
+            data_binary += r[-1]
+            data_binary += g[-1]
+            data_binary += b[-1]
             total_bytes = [ data_binary[i: i+7] for i in range(0, len(data_binary), 7) ]
             decoded_data = ""
             for byte in total_bytes:
@@ -175,8 +175,6 @@ def show(vid, key):
     print("Menampilkan pesan tersembunyi pada file : ", vid)
     print("Key : ", key)
     vidcap = cv2.VideoCapture(vid)
-    frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
-    print("Jumlah frame pada video yang dipilih : ",frames)
     
     frame_number = 0
     result = []
@@ -203,18 +201,20 @@ def show(vid, key):
     return secret_message
 
 def combine_video_audio(vid):
+    print("Memulai proses menggabungkan audio...")
     my_clip = VideoFileClip(vid)
-    my_clip.audio.write_audiofile("audio_TEMP.mp3", verbose=False)
+    my_clip.audio.write_audiofile("audio_TEMP.mp3", logger=None)
     videoclip = VideoFileClip("stego_TEMP.avi")
     audioclip = AudioFileClip("audio_TEMP.mp3")
 
     new_audioclip = CompositeAudioClip([audioclip])
     videoclip.audio = new_audioclip
-    videoclip.write_videofile("video_steganography.avi", codec="ffv1", verbose=False)
+    videoclip.write_videofile("video_steganography.avi", codec="ffv1", logger=None)
 
-    print("Video Steganografi tersimpan dengan nama file", "video_steganography.avi")
     os.remove("audio_TEMP.mp3")
     os.remove("stego_TEMP.avi")
+    print("Semua proses telah selesai")
+    print("Video Steganografi tersimpan dengan nama file", "video_steganography.avi")
 
 def hide_gui(filename):
     window = Tk()
@@ -260,12 +260,16 @@ def hide_gui(filename):
                 msgbox = messagebox.showerror("Error",  "The maximum limit of words that can be hidden exceeds the limit.\n\nNumber of Words: "+str(len(input_pesan.split()))+"\nMaximum Limit Number of Words: "+str(frames-int(spinbox)+1))
             else:
                 hiding_secret_message(hide(filename, int(spinbox), str(input_pesan), str(input_key)))
-        
-        
+                
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
-        frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
+        frames=0
+        while(vidcap.isOpened()):
+            ret, frame = vidcap.read()
+            if ret == False:
+                break
+            frames+=1
         fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
@@ -320,7 +324,12 @@ def show_gui(filename):
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
-        frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT)-1)
+        frames=0
+        while(vidcap.isOpened()):
+            ret, frame = vidcap.read()
+            if ret == False:
+                break
+            frames+=1
         fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
@@ -341,22 +350,30 @@ def show_gui(filename):
         
         window.mainloop()
 
-def browse_files():
-    filename = filedialog.askopenfilename(initialdir = "C:/Users/Komandan3/Skripsion",
-                                          title = "Select a Video",
-                                          filetypes = (("Video files",
-                                                        "*.avi*"),
-                                                       ("All files",
-                                                        "*.*")))
+def browse_file(hide=True):
+    if hide:
+        filename = filedialog.askopenfilename(initialdir = "C:/Users/Komandan3/Skripsion",
+                                          title = "Select an Input Video",
+                                          filetypes=[("Video file", ".avi .mp4")])
+    else:
+        filename = filedialog.askopenfilename(initialdir = "C:/Users/Komandan3/Skripsion",
+                                          title = "Select a Steganography Video",
+                                          filetypes=[("Video file", ".avi")])
     return filename
+
+def hide_file():
+    return browse_file(hide=True)
+
+def show_file():
+    return browse_file(hide=False)
 
 def gui():
     window = Tk()
     window.title('Video Steganography')
     window.geometry("300x300")
     label_title = Label(window, text = "Video Steganography", font=("Helvetica", 20)).pack(pady=16)
-    button_hide_gui = Button(window, text = "Hide Secret Message", font=("Helvetica", 16), command = lambda: [hide_gui(browse_files())], width=20, height=3).pack(pady=8)
-    button_show_gui = Button(window, text = "Show Secret Message", font=("Helvetica", 16), command = lambda: [show_gui(browse_files())], width=20, height=3).pack(pady=8)
+    button_hide_gui = Button(window, text = "Hide Secret Message", font=("Helvetica", 16), command = lambda: [hide_gui(hide_file())], width=20, height=3).pack(pady=8)
+    button_show_gui = Button(window, text = "Show Secret Message", font=("Helvetica", 16), command = lambda: [show_gui(show_file())], width=20, height=3).pack(pady=8)
     window.mainloop()
 
 if __name__ == "__main__":
