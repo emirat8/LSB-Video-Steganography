@@ -97,6 +97,7 @@ def hide(vid, n, data, key):
     size = (frame_width, frame_height)
     fps = int(vidcap.get(cv2.CAP_PROP_FPS))
     out = cv2.VideoWriter('stego_TEMP.avi', fourcc, fps=fps, frameSize=size)
+    first_delimiter = "^$^"
     word_delimiter = "^*^"
     frame_delimiter = "^#^"
     data=unicodedata.normalize('NFKD', data).encode('ascii', 'ignore').decode('ascii')
@@ -106,7 +107,7 @@ def hide(vid, n, data, key):
     stego_start = [str(n)]
     stego_start=encryption(stego_start, key)
     stego_start_str="".join(stego_start)
-    stego_start_str+=word_delimiter
+    stego_start_str=first_delimiter+stego_start_str+word_delimiter
     
     print(data)
     data=encryption(data, key)
@@ -148,7 +149,7 @@ def lsb_show(frame):
     word_delimiter = "^*^"
     frame_delimiter = "^#^"
     data_binary = ""
-    show.data = ""
+    data = ""
     
     for row in frame:
         for pixel in row:
@@ -162,14 +163,40 @@ def lsb_show(frame):
                 decoded_data += chr(int(byte, 2))
                 if decoded_data[-3:] == word_delimiter:
                     for i in range(0,len(decoded_data)-3):
-                        show.data += decoded_data[i]
+                        data += decoded_data[i]
                     show.next = True
-                    return
+                    return data
                 elif decoded_data[-3:] == frame_delimiter:
                     for i in range(0,len(decoded_data)-3):
-                        show.data += decoded_data[i]
+                        data += decoded_data[i]
                     show.next = False
-                    return
+                    return data
+
+def lsb_show_first_frame(frame):
+    first_delimiter = "^$^"
+    word_delimiter = "^*^"
+    data_binary = ""
+    data = ""
+    
+    for row in frame:
+        for pixel in row:
+            r, g, b = pixel_to_binary(pixel)
+            data_binary += r[-1]
+            data_binary += g[-1]
+            data_binary += b[-1]
+            total_bytes = [ data_binary[i: i+7] for i in range(0, len(data_binary), 7) ]
+            decoded_data = ""
+            for byte in total_bytes:
+                decoded_data += chr(int(byte, 2))
+                if len(decoded_data) > 3:
+                    if decoded_data[:3] == first_delimiter:
+                        if decoded_data[-3:] == word_delimiter:
+                            for i in range(0,len(decoded_data)-6):
+                                data += decoded_data[i+3]
+                            return data
+                    else:
+                        return False
+    return False
 
 def show(vid, key):
     print("Menampilkan pesan tersembunyi pada file : ", vid)
@@ -185,14 +212,15 @@ def show(vid, key):
             break
         if frame_number == 1:
             print("\nFrame ", frame_number)
-            lsb_show(frame)
-            show.data = decryption([str(show.data)], key)
-            n = int(show.data[0])
+            data = decryption([str(lsb_show_first_frame(frame))], key)
+            if str(data[0]).isdigit() == True:
+                n = int(data[0])
+            else:
+                return ("-")
         elif frame_number >= n:
             print("\nFrame ", frame_number)
-            lsb_show(frame)
-            print (show.data)
-            result.append(show.data)
+            result.append(lsb_show(frame))
+            print(result[-1])
             if show.next == False:
                 secret_message = decryption(result, key)
                 secret_message = " ".join(secret_message)
