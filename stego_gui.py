@@ -137,9 +137,9 @@ def hide(vid, n, data, key):
             change_frame_with = lsb_hide(frame, data[frame_number-n])
             frame = change_frame_with
         out.write(frame)
+    cv2.destroyAllWindows()
     vidcap.release()
     out.release()
-    cv2.destroyAllWindows()
 
     print("\nPesan telah berhasil disembunyikan")
     combine_video_audio(vid)
@@ -153,10 +153,10 @@ def lsb_show(frame):
     
     for row in frame:
         for pixel in row:
-            r, g, b = pixel_to_binary(pixel)
-            data_binary += r[-1]
-            data_binary += g[-1]
+            b, g, r = pixel_to_binary(pixel)
             data_binary += b[-1]
+            data_binary += g[-1]
+            data_binary += r[-1]
             total_bytes = [ data_binary[i: i+7] for i in range(0, len(data_binary), 7) ]
             decoded_data = ""
             for byte in total_bytes:
@@ -180,10 +180,10 @@ def lsb_show_first_frame(frame):
     
     for row in frame:
         for pixel in row:
-            r, g, b = pixel_to_binary(pixel)
-            data_binary += r[-1]
-            data_binary += g[-1]
+            b, g, r = pixel_to_binary(pixel)
             data_binary += b[-1]
+            data_binary += g[-1]
+            data_binary += r[-1]
             total_bytes = [ data_binary[i: i+7] for i in range(0, len(data_binary), 7) ]
             decoded_data = ""
             for byte in total_bytes:
@@ -226,6 +226,9 @@ def show(vid, key):
                 secret_message = " ".join(secret_message)
                 print("\nPesan yang disembunyikan ialah : ", secret_message)
                 break
+    cv2.destroyAllWindows()
+    vidcap.release()
+    
     return secret_message
 
 def combine_video_audio(vid):
@@ -292,13 +295,16 @@ def hide_gui(filename):
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
+        fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         frames=0
         while(vidcap.isOpened()):
             ret, frame = vidcap.read()
             if ret == False:
                 break
             frames+=1
-        fps = int(vidcap.get(cv2.CAP_PROP_FPS))
+        cv2.destroyAllWindows()
+        vidcap.release()
+        
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
         label_video_frames = Label(window, text="Total frame: "+str(frames))
@@ -352,13 +358,16 @@ def show_gui(filename):
         vidcap = cv2.VideoCapture(filename)
         frame_width = int(vidcap.get(3))
         frame_height = int(vidcap.get(4))
+        fps = int(vidcap.get(cv2.CAP_PROP_FPS))
         frames=0
         while(vidcap.isOpened()):
             ret, frame = vidcap.read()
             if ret == False:
                 break
             frames+=1
-        fps = int(vidcap.get(cv2.CAP_PROP_FPS))
+        cv2.destroyAllWindows()
+        vidcap.release()
+        
         label_file_explorer = Label(window, text="Directory: "+filename)
         label_video_resolution = Label(window, text="Video resolution: "+str(frame_width)+"x"+str(frame_height))
         label_video_frames = Label(window, text="Total frame: "+str(frames))
