@@ -11,13 +11,13 @@ from moviepy.audio.AudioClip import CompositeAudioClip
 
 def str_to_binary(msg):
     #Convert string to binary 7 digit
-    result= ''.join(format(ord(i), "07b") for i in msg)
-    return result
+    binary = ''.join(format(ord(i), "07b") for i in msg)
+    return binary
 
-def pixel_to_binary(msg):
+def pixel_to_binary(pixel):
     #Convert pixel to binary 8 digit
-    result= [format(i, "08b") for i in msg]
-    return result
+    binary = [format(i, "08b") for i in pixel]
+    return binary
 
 def vigenere(words, key, encrypt=True):
     result_encrypt = []
