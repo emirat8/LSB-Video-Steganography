@@ -113,7 +113,7 @@ def lsb_hide(frame, data):
                 index_data += 1
             #If all bit in character binary from word has been substituted, then stop
             if index_data >= length_data:
-                break
+                return frame
   
     return frame
 
