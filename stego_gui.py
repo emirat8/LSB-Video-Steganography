@@ -38,7 +38,7 @@ def vigenere(words, key, encrypt=True):
 
                 #Vigenere Cipher Encryption
                 value = (letter_n + key_n) % 128
-                print("Karakter ", chr(letter_n), "(", letter_n, ")", " dengan Key ", chr(key_n), "(", key_n, ")", " = ", chr(value), "(", value, ")")
+                #print("Karakter ", chr(letter_n), "(", letter_n, ")", " dengan Key ", chr(key_n), "(", key_n, ")", " = ", chr(value), "(", value, ")")
 
                 #Convert ASCII value back to character and add character to ciphertext
                 word += chr(value)
@@ -64,7 +64,7 @@ def vigenere(words, key, encrypt=True):
 
                 #Vigenere Cipher Decryption
                 value = (letter_n - key_n) % 128
-                print("Ciphertext ", chr(letter_n), "(", letter_n, ")", " dengan Key ", chr(key_n), "(", key_n, ")", " = ", chr(value), "(", value, ")")
+                #print("Ciphertext ", chr(letter_n), "(", letter_n, ")", " dengan Key ", chr(key_n), "(", key_n, ")", " = ", chr(value), "(", value, ")")
 
                 #Convert ASCII value back to character and add character to word
                 word += chr(value)
@@ -87,30 +87,41 @@ def lsb_hide(frame, data):
 
     #Convert word to binary
     binary_data=str_to_binary(data)
-
+    
     print("Binary ",data," : ", binary_data)
     length_data = len(binary_data)
     
     index_data = 0
+    pixel_count = 0
 
     #Looping through each row in frame
     for row in frame:
         #Looping through each pixel in frame row
         for pixel in row:
+            pixel_count += 1
+            #print("Pixel ke", pixel_count)
+            if pixel_count % 4 == 0:
+                #print("Skip Pixel ke", pixel_count)
+                continue
             #Convert pixel to binary
             b, g, r = pixel_to_binary(pixel)
             if index_data < length_data:
                 #Substitute B last bit binary with 1 bit character binary from word
                 pixel[0] = int(b[:-1] + binary_data[index_data], 2)
                 index_data += 1
+                #print("Biner ke", index_data)
+                if index_data % 7 == 0:
+                    continue
             if index_data < length_data:
                 #Substitute G last bit binary with 1 bit character binary from word
                 pixel[1] = int(g[:-1] + binary_data[index_data], 2)
                 index_data += 1
+                #print("Biner ke", index_data)
             if index_data < length_data:
                 #Substitute R last bit binary with 1 bit character binary from word
                 pixel[2] = int(r[:-1] + binary_data[index_data], 2)
                 index_data += 1
+                #print("Biner ke", index_data)
             #If all bit in character binary from word has been substituted, then stop
             if index_data >= length_data:
                 return frame
@@ -215,27 +226,29 @@ def lsb_show(frame):
     
     data_binary = ""
     data = ""
-
+    pixel_count = 0
+    
     #Looping through each row in frame
     for row in frame:
         #Looping through each pixel in frame row
         for pixel in row:
+            pixel_count += 1
+            if pixel_count % 4 == 0:
+                continue
             #Convert pixel to binary
             b, g, r = pixel_to_binary(pixel)
 
             #Get last bit binary from B, G, and R
             data_binary += b[-1]
-            data_binary += g[-1]
-            data_binary += r[-1]
-
-            #Separate all binary that has been obtained to 7 digit each index list
-            total_bytes = [data_binary[i: i+7] for i in range(0, len(data_binary), 7)]
-            
-            decoded_data = ""
-            #Looping through each index
-            for byte in total_bytes:
-                #Convert index to character
-                decoded_data += chr(int(byte, 2))
+            if len(data_binary) % 7 == 0:
+                #Separate all binary that has been obtained to 7 digit each index list
+                total_bytes = [data_binary[i: i+7] for i in range(0, len(data_binary), 7)]
+                
+                decoded_data = ""
+                #Convert each index to character
+                for byte in total_bytes:
+                    decoded_data += chr(int(byte, 2))
+                    
                 #If last 3 character contain word delimiter, then tell the system to find word in next frame and return index without the delimiter
                 if decoded_data[-3:] == word_delimiter:
                     for i in range(0,len(decoded_data)-3):
@@ -248,6 +261,13 @@ def lsb_show(frame):
                         data += decoded_data[i]
                     show.next = False
                     return data
+                
+                continue
+                    
+            data_binary += g[-1]
+            data_binary += r[-1]
+            
+    return False
 
 def lsb_show_first_frame(frame):
 
@@ -257,27 +277,30 @@ def lsb_show_first_frame(frame):
     
     data_binary = ""
     data = ""
-
+    pixel_count = 0
+    
     #Looping through each row in frame
     for row in frame:
         #Looping through each pixel in frame row
         for pixel in row:
+            pixel_count += 1
+            if pixel_count % 4 == 0:
+                continue
+            
             #Convert pixel to binary
             b, g, r = pixel_to_binary(pixel)
 
             #Get last bit binary from B, G, and R
             data_binary += b[-1]
-            data_binary += g[-1]
-            data_binary += r[-1]
-
-            #Separate all binary that has been obtained to 7 digit each index list
-            total_bytes = [data_binary[i: i+7] for i in range(0, len(data_binary), 7)]
-            
-            decoded_data = ""
-            #Looping through each index
-            for byte in total_bytes:
-                #Convert index to character
-                decoded_data += chr(int(byte, 2))
+            if len(data_binary) % 7 == 0:
+                #Separate all binary that has been obtained to 7 digit each index list
+                total_bytes = [data_binary[i: i+7] for i in range(0, len(data_binary), 7)]
+                
+                decoded_data = ""
+                #Looping through each index
+                for byte in total_bytes:
+                    #Convert index to character
+                    decoded_data += chr(int(byte, 2))
                 if len(decoded_data) > 3:
                     #If first 3 character contain first delimiter, then it's a steganography video and there's secret message hidden
                     if decoded_data[:3] == first_delimiter:
@@ -289,6 +312,12 @@ def lsb_show_first_frame(frame):
                     #If first 3 character didn't contain first delimiter, then it's not a steganography video and there's no secret message hidden
                     else:
                         return False
+                continue
+            
+            data_binary += g[-1]
+            data_binary += r[-1]
+            print(data_binary)
+
     return False
 
 def show(vid, key):
